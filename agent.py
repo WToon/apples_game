@@ -22,50 +22,22 @@ agentclass = None
 
 
 class Agent:
-    """Example Dots and Boxes agent implementation base class.
-    It returns a random next move.
-    A Agent object should implement the following methods:
-    - __init__
-    - add_player
-    - register_action
-    - next_action
-    - end_game
-    This class does not necessarily use the best data structures for the
-    approach you want to use.
-    """
-    def __init__(self, player, nb_rows, nb_cols):
-        """Create Dots and Boxes agent.
-        :param player: Player number, 1 or 2
-        :param nb_rows: Rows in grid
-        :param nb_cols: Columns in grid
-        """
-        self.player = {player}
+
+    def __init__(self, init_msg):
+        self.player = {init_msg["player"]}
+        self.players = init_msg["players"]
+        self.apples = init_msg["apples"]
         self.ended = False
-        self.nb_rows = nb_rows
-        self.nb_cols = nb_cols
 
     def add_player(self, player):
-        """Use the same agent for multiple players."""
         self.player.add(player)
 
-    def register_action(self, row, column, orientation, player):
-        """Register action played in game.
-        :param row:
-        :param columns:
-        :param orientation: "v" or "h"
-        :param player: 1 or 2
-        """
-        pass
+    def register_action(self, msg):
+        self.players = msg["players"]
+        self.apples = msg["apples"]
 
-    def next_action(self):
-        """Return the next action this agent wants to perform.
-        In this example, the function implements a random move. Replace this
-        function with your own approach.
-        :return: (row, column, orientation)
-        """
-        logger.info("Computing next move (grid={}x{}, player={})"\
-                .format(self.nb_rows, self.nb_cols, self.player))
-        # Random move
+    def next_action(self, player):
+        logger.info("Computing next move: player={} pos={})".format(player, self.players[player-1]))
         return 'move'
 
     def end_game(self):
@@ -73,11 +45,8 @@ class Agent:
 
 
 ## MAIN EVENT LOOP
-
 async def handler(websocket, path):
     logger.info("Start listening")
-    game = None
-    # msg = await websocket.recv()
     try:
         async for msg in websocket:
             logger.info("< {}".format(msg))
@@ -93,13 +62,10 @@ async def handler(websocket, path):
                 if msg["game"] in games:
                     games[msg["game"]].add_player(msg["player"])
                 else:
-                    nb_rows, nb_cols = msg["grid"]
-                    games[msg["game"]] = agentclass(msg["player"],
-                                                    nb_rows,
-                                                    nb_cols)
+                    games[msg["game"]] = agentclass(msg)
                 if msg["player"] == 1:
                     # Start the game
-                    nm = games[game].next_action()
+                    nm = games[game].next_action(1)
                     print('nm = {}'.format(nm))
                     if nm is None:
                         # Game over
@@ -115,9 +81,10 @@ async def handler(websocket, path):
 
             elif msg["type"] == "action":
                 # An action has been played
+                games[game].register_action(msg)
                 if msg["nextplayer"] in games[game].player:
                     # Compute your move
-                    nm = games[game].next_action()
+                    nm = games[game].next_action(msg["nextplayer"])
                     if nm is None:
                         # Game over
                         logger.info("Game over")
