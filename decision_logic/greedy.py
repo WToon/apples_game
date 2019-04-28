@@ -1,6 +1,10 @@
 def get_greedy_decision(player, players, apples):
+
+    # Player position
     position = players[player-1]["location"]
+    # Player orientation
     orientation = players[player-1]["orientation"]
+
     if len(apples) < 1:
         return 'move'
     for apple in apples:

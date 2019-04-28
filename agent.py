@@ -31,6 +31,7 @@ class Agent:
         self.apples = apples
 
     def next_action(self, player):
+        # Have your decision logic compute the next move here
         nm = greedy.get_greedy_decision(player, self.players, self.apples)
         return nm
 
