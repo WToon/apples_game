@@ -12,8 +12,7 @@ import logging
 import asyncio
 import websockets
 import json
-from collections import defaultdict
-import random
+import decision_logic.greedy as greedy
 
 
 logger = logging.getLogger(__name__)
@@ -23,22 +22,17 @@ agentclass = None
 
 class Agent:
 
-    def __init__(self, init_msg):
-        self.player = {init_msg["player"]}
-        self.players = init_msg["players"]
-        self.apples = init_msg["apples"]
+    def __init__(self, player):
+        self.player = {player}
         self.ended = False
 
-    def add_player(self, player):
-        self.player.add(player)
-
-    def register_action(self, msg):
-        self.players = msg["players"]
-        self.apples = msg["apples"]
+    def register_action(self, players, apples):
+        self.players = players
+        self.apples = apples
 
     def next_action(self, player):
-        logger.info("Computing next move: player={} pos={})".format(player, self.players[player-1]))
-        return 'move'
+        nm = greedy.get_greedy_decision(player, self.players, self.apples)
+        return nm
 
     def end_game(self):
         self.ended = True
@@ -57,38 +51,33 @@ async def handler(websocket, path):
                 return False
             game = msg["game"]
             answer = None
+
+            # Initialize game
             if msg["type"] == "start":
-                # Initialize game
-                if msg["game"] in games:
-                    games[msg["game"]].add_player(msg["player"])
-                else:
-                    games[msg["game"]] = agentclass(msg)
+                games[msg["game"]] = agentclass(msg["player"])
+                # The first player generates a starting move
                 if msg["player"] == 1:
                     # Start the game
+                    games[game].register_action(msg["players"], msg["apples"])
                     nm = games[game].next_action(1)
-                    print('nm = {}'.format(nm))
                     if nm is None:
                         # Game over
-                        logger.info("Game over")
+                        logger.info("Generation of start move failed")
                         continue
                     answer = {
                         'type': 'action',
                         'action': nm,
                     }
                 else:
-                    # Wait for the opponent
+                    # Other players wait for their turn
                     answer = None
 
+            # Respond to actions
             elif msg["type"] == "action":
-                # An action has been played
-                games[game].register_action(msg)
+                # It is this agents turn TODO support multiple players in same agent
                 if msg["nextplayer"] in games[game].player:
-                    # Compute your move
+                    games[game].register_action(msg["players"], msg["apples"])
                     nm = games[game].next_action(msg["nextplayer"])
-                    if nm is None:
-                        # Game over
-                        logger.info("Game over")
-                        continue
                     answer = {
                         'type': 'action',
                         'action': nm
@@ -104,7 +93,6 @@ async def handler(websocket, path):
                 logger.error("Unknown message type:\n{}".format(msg))
 
             if answer is not None:
-                print(answer)
                 await websocket.send(json.dumps(answer))
                 logger.info("> {}".format(answer))
     except websockets.exceptions.ConnectionClosed as err:
@@ -123,9 +111,11 @@ def start_server(port):
 
 def main(argv=None):
     global agentclass
+    quiet = 1
+    verbose = 0
     parser = argparse.ArgumentParser(description='Start agent to play the Apples game')
-    parser.add_argument('--verbose', '-v', action='count', default=0, help='Verbose output')
-    parser.add_argument('--quiet', '-q', action='count', default=0, help='Quiet output')
+    parser.add_argument('--verbose', '-v', action='count', default=verbose, help='Verbose output')
+    parser.add_argument('--quiet', '-q', action='count', default=quiet, help='Quiet output')
     parser.add_argument('port', metavar='PORT', type=int, help='Port to use for server')
     args = parser.parse_args(argv)
 
