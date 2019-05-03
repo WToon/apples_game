@@ -1,5 +1,6 @@
 def get_greedy_decision(player, players, apples):
 
+
     # Player position
     position = players[player-1]["location"]
     # Player orientation
