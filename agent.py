@@ -41,9 +41,10 @@ class Agent:
           position = self.players[player - 1]["location"]
           # Player orientation
           orientation = self.players[player - 1]["orientation"]
-
           self.agent = A3C.A3CAgent(EPS_START,EPS_STOP,EPS_STEPS,position[0],position[1],ORIENTATION.index(orientation), self.apples)
         nm = self.agent.get_A3C_decision(player,self.players,self.apples)
+        if (self.ended):
+          self.agent=None
         return nm
 
     def end_game(self):

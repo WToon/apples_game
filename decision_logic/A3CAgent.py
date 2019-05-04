@@ -21,7 +21,7 @@ EPS_START = 0.4
 EPS_STOP = .15
 EPS_STEPS = 750
 GAMMA = 0.99
-ACTIONS = ["move","left","right"]
+ACTIONS = ["left","move","right"]
 ORIENTATION = ["up","left","right","down"]
 N_STEP_RETURN = 8
 GAMMA_N = GAMMA ** N_STEP_RETURN
@@ -197,8 +197,11 @@ class Brain:
     self.default_graph.finalize()  # avoid modifications
 
   def _build_model(self):
+
+
     model = load_model(FilePath)
-    model._make_predict_function()
+    model._make_predict_function()  # have to initialize before threading
+
     return model
 
   def _build_graph(self, model):

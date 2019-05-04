@@ -17,27 +17,27 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 #TRAINING VARIABLES
 NB_APPLES = 50
-NB_AGENTS = 5
-NB_TURNS = 50
-NB_TURNS_AFTER_TRAINING=100
-EPISODES_AFTER_TRAINING=10
+NB_AGENTS = 1
+NB_TURNS = 100
+NB_TURNS_AFTER_TRAINING=1000
+EPISODES_AFTER_TRAINING=0
 
 #AGENT VARIABLES
-EPS_START = 0.4
-EPS_STOP = .15
-EPS_STEPS = 750
+EPS_START = 0.9
+EPS_STOP = .1
+EPS_STEPS = 50
 GAMMA = 0.99
 ACTIONS = ["move","left","right"]
 ORIENTATION = ["up","left","right","down"]
-N_STEP_RETURN = 8
+N_STEP_RETURN = 4
 GAMMA_N = GAMMA ** N_STEP_RETURN
 NUM_ACTIONS = 3
 NUM_STATE = 3
 NONE_STATE = np.zeros(NUM_STATE)
 
-RUN_TIME = 25
-THREADS = 8
-OPTIMIZERS = 2
+RUN_TIME = 0
+THREADS = 1
+OPTIMIZERS = 0
 
 #Filepath to save and load the model
 FilePath = "C:/Users/siebe/OneDrive/Documenten/School/machine learning project/apples_game/decision_logic/trainedModel.h5"
@@ -54,12 +54,14 @@ class WormsEnvironment(threading.Thread):
     threading.Thread.__init__(self)
     self.apples = []
     self.worms = []
+    self.steps = 0
 
     #add the apples
     for i in range(0,NB_APPLES):
       newApple = [random.randint(0,35),random.randint(0,15)]
-      if not newApple in self.apples:
-        self.apples.append(newApple)
+      while newApple in self.apples:
+        newApple = [random.randint(0, 35), random.randint(0, 15)]
+      self.apples.append(newApple)
     #add the worms on a random position
     for i in range(0,NB_AGENTS):
       randx = random.randint(0,35)
@@ -69,8 +71,11 @@ class WormsEnvironment(threading.Thread):
 
   #a worm does a certain action
   def worm_step(self,worm,actionid):
+    self.steps +=1
+    print (self.steps)
     action = ACTIONS[actionid]
     x,y,orientation = worm.state
+
     apples = worm.visibleApples
     newX=None
     newY=None
@@ -126,10 +131,13 @@ class WormsEnvironment(threading.Thread):
         newOrientation=ORIENTATION.index("left")
         newX = (x-1)%36
         newY = y
-
     if [newX, newY] in apples:
       reward +=1
       self.apples.remove([newX,newY])
+      newApple = [random.randint(0,35),random.randint(0,36)]
+      while newApple in self.apples:
+        newApple = [random.randint(0, 35), random.randint(0, 36)]
+      self.apples.append(newApple)
     newApples = self.checkApples(newX,newY,self.apples)
     return  ((newX,newY,newOrientation),newApples,reward)
 
@@ -137,8 +145,14 @@ class WormsEnvironment(threading.Thread):
   def checkApples(self,x,y,apples):
     result = []
     for i in apples:
-      if (abs(i[0]-x)<=7):
-        if (abs(i[1]-y)<=7):
+      dx = abs(i[0]-x)
+      if dx>18:
+        dx = 36-dx
+      dy = abs(i[1]-y)
+      if dy>8:
+        dy = 16-dy
+      if (dx<=7):
+        if (dy<=7):
           result.append(i)
     return result
 
@@ -191,11 +205,13 @@ class WormsEnvironment(threading.Thread):
 
   #reset the environment
   def reset(self):
+
     self.apples = []
-    for i in range(0,5):
-      newApple = [random.randint(0,35),random.randint(0,15)]
-      if not newApple in self.apples:
-        self.apples.append(newApple)
+    for i in range(0, NB_APPLES):
+      newApple = [random.randint(0, 35), random.randint(0, 15)]
+      while newApple in self.apples:
+        newApple = [random.randint(0, 35), random.randint(0, 15)]
+      self.apples.append(newApple)
     for worm in self.worms:
       self.wormreset(worm,self.apples)
 
@@ -212,7 +228,7 @@ class WormsEnvironment(threading.Thread):
       worm.visibleApples = apples
       rewards[self.worms.index(worm)]+= reward
 
-    self.addApples()
+   # self.addApples()
     return rewards
 
   #play one game
@@ -221,6 +237,7 @@ class WormsEnvironment(threading.Thread):
     rewards = np.zeros(len(self.worms))
     for i in range(0,NB_TURNS):
       rewards = self.step(rewards)
+    self.steps = 0
     print("DONE",rewards)
 
   #play a number of games after training
@@ -326,13 +343,7 @@ class Brain:
     self.default_graph.finalize()  # avoid modifications
 
   def _build_model(self):
-    l_input = Input(batch_shape=(None, NUM_STATE))
-    l_dense = Dense(16, activation='relu')(l_input)
-
-    out_actions = Dense(NUM_ACTIONS, activation='softmax')(l_dense)
-    out_value = Dense(1, activation='linear')(l_dense)
-
-    model = Model(inputs=[l_input], outputs=[out_actions, out_value])
+    model = load_model(FilePath)
     model._make_predict_function()  # have to initialize before threading
     return model
 
