@@ -1,6 +1,7 @@
 .*
 *.log
 Thumbs.db
+.pyc
 
 node_modules/
 
