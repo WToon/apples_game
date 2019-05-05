@@ -12,6 +12,8 @@ from keras.layers import *
 from keras import optimizers
 from keras import backend as K
 import os
+from keras.utils import plot_model
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 NB_APPLES = 50
 NB_AGENTS = 5
@@ -208,7 +210,7 @@ class Brain:
 
     model = Model(inputs=[l_input], outputs=[out_actions, out_value])
     model._make_predict_function()  # have to initialize before threading
-
+    plot_model(model, to_file='model_init.png', show_shapes=True)
     return model
 
   def _build_graph(self, model):
