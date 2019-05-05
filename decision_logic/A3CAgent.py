@@ -33,7 +33,7 @@ RUN_TIME = 100
 THREADS = 8
 OPTIMIZERS = 2
 
-FilePath = "C:/Users/siebe/OneDrive/Documenten/School/machine learning project/apples_game/decision_logic/trainedModel.h5"
+FilePath = "D:\\Users\\Wouter\\Documents\\Repos\\apples_game\\decision_logic\\trainedModel.h5"
 THREAD_DELAY = 0.001
 MIN_BATCH = 4*32
 LEARNING_RATE = 5e-3
@@ -42,6 +42,8 @@ LOSS_V = .5  # v loss coefficient
 LOSS_ENTROPY = .01  # entropy coefficient
 frames = 0
 class A3CAgent:
+
+
   def __init__(self, eps_start, eps_end, eps_steps, x, y, orientation, apples):
     self.eps_start = eps_start
     self.eps_end = eps_end
@@ -197,9 +199,14 @@ class Brain:
     self.default_graph.finalize()  # avoid modifications
 
   def _build_model(self):
+    #model = load_model(FilePath)
+    l_input = Input(batch_shape=(None, NUM_STATE))
+    l_dense = Dense(16, activation='relu')(l_input)
 
+    out_actions = Dense(NUM_ACTIONS, activation='softmax')(l_dense)
+    out_value = Dense(1, activation='linear')(l_dense)
 
-    model = load_model(FilePath)
+    model = Model(inputs=[l_input], outputs=[out_actions, out_value])
     model._make_predict_function()  # have to initialize before threading
 
     return model
