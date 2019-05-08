@@ -178,7 +178,7 @@ class AGTrainingEnvironment:
         newx=x
         newy=y
         self._zap(x,y,orientation,players)
-        score -=1
+        #score -=1
       if newx ==0:
         newx = 36
       if newy ==0:
@@ -210,7 +210,7 @@ class AGTrainingEnvironment:
         if not zapped:
           for player in players:
             if player['location'] == [newx,newy] and not (newx == x and newy == y):
-              player['score'] -= 50
+              #player['score'] -= 50
               zapped=True
 
 
@@ -225,8 +225,9 @@ class AGTrainingEnvironment:
         print("TURN ", turn)
         self._play_turn(verbose=False)
       print("GAME HAS ENDED")
+      print("Players: {}".format(self.worms))
       self.agent.save()
 
 
 Env = AGTrainingEnvironment()
-Env.play(10)
+Env.play(1000)
