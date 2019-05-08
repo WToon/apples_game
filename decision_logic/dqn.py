@@ -10,6 +10,7 @@ from keras.utils import plot_model
 from decision_logic import oh_encoding as ohe
 
 
+
 #array of the actions that can be played
 ACTIONS = ["move","left","right","fire"]
 # Position, orientation, apples, other players (orientation/location)
@@ -57,9 +58,9 @@ class DQNAgent():
         model.add(Conv2D(64, (2,2), input_shape=(6, 15, 15), name="States"))
         model.add(Dense(24, activation='relu', name="Extra_convergence"))
         model.add(Dense(self.action_size, activation='linear', name="Probability_distribution_for_the_4_actions"))
-        model.compile(loss='cross-entropy', optimizer=Adam(lr=self.learning_rate))
+        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
 
-        plot_model(model, "model.png", show_shapes=True)
+        #plot_model(model, "model.png", show_shapes=True)
 
         return model
 
