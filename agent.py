@@ -13,7 +13,6 @@ import asyncio
 import websockets
 import json
 import decision_logic.greedy as greedy
-import decision_logic.A3CAgent as A3C
 import decision_logic.random_agent as random
 
 
