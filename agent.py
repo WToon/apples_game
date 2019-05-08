@@ -14,6 +14,7 @@ import websockets
 import json
 import decision_logic.greedy as greedy
 import decision_logic.A3CAgent as A3C
+import decision_logic.random_agent as random
 
 
 logger = logging.getLogger(__name__)
@@ -22,10 +23,10 @@ agentclass = None
 EPS_START = 0.4
 EPS_STOP = .15
 EPS_STEPS = 750
+agenttype = None
 
 ORIENTATION = ["up","left","right","down"]
 class Agent:
-
     def __init__(self, player):
         self.player = {player}
         self.agent=None
@@ -37,14 +38,18 @@ class Agent:
 
     def next_action(self, player):
         # Have your decision logic compute the next move here
-        if self.agent == None:
-          position = self.players[player - 1]["location"]
-          # Player orientation
-          orientation = self.players[player - 1]["orientation"]
-          self.agent = A3C.A3CAgent(EPS_START,EPS_STOP,EPS_STEPS,position[0],position[1],ORIENTATION.index(orientation), self.apples)
-        nm = self.agent.get_A3C_decision(player,self.players,self.apples)
-        if (self.ended):
-          self.agent=None
+        # if self.agent == None:
+        #   position = self.players[player - 1]["location"]
+        #   # Player orientation
+        #   orientation = self.players[player - 1]["orientation"]
+        #   self.agent = A3C.A3CAgent(EPS_START,EPS_STOP,EPS_STEPS,position[0],position[1],ORIENTATION.index(orientation), self.apples)
+        # nm = self.agent.get_A3C_decision(player,self.players,self.apples)
+        # if (self.ended):
+        #   self.agent=None
+        if agenttype == 'greedy':
+            nm = greedy.get_greedy_decision(player, self.players, self.apples)
+        elif agenttype == 'random':
+            nm = random.get_random_decision(player, self.players, self.apples)
         return nm
 
     def end_game(self):
@@ -123,12 +128,14 @@ def start_server(port):
 ## COMMAND LINE INTERFACE
 
 def main(argv=None):
-    global agentclass
-    quiet = 1
-    verbose = 0
+    global agentclass, agenttype
+    types = ['random', 'greedy']
+    quiet = 0; verbose = 0
+
     parser = argparse.ArgumentParser(description='Start agent to play the Apples game')
     parser.add_argument('--verbose', '-v', action='count', default=verbose, help='Verbose output')
     parser.add_argument('--quiet', '-q', action='count', default=quiet, help='Quiet output')
+    parser.add_argument('--agenttype', '-a', action='store', default=1, help='Agent decision type')
     parser.add_argument('port', metavar='PORT', type=int, help='Port to use for server')
     args = parser.parse_args(argv)
 
@@ -136,6 +143,7 @@ def main(argv=None):
     logger.addHandler(logging.StreamHandler(sys.stdout))
 
     agentclass = Agent
+    agenttype = types[int(args.agenttype)]
     start_server(args.port)
 
 
