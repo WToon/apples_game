@@ -23,7 +23,7 @@ agentclass = None
 EPS_START = 0.4
 EPS_STOP = .15
 EPS_STEPS = 750
-agenttype = None
+agenttype = "greedy"
 
 ORIENTATION = ["up","left","right","down"]
 class Agent:
