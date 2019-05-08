@@ -14,6 +14,8 @@ import websockets
 import json
 import decision_logic.greedy as greedy
 import decision_logic.random_agent as random
+import decision_logic.dqn as dqn
+import numpy as np
 
 
 logger = logging.getLogger(__name__)
@@ -28,28 +30,23 @@ ORIENTATION = ["up","left","right","down"]
 class Agent:
     def __init__(self, player):
         self.player = {player}
-        self.agent=None
         self.ended = False
+        self.agent = dqn.DQNAgent()
+        self.loaded = False
 
     def register_action(self, players, apples):
         self.players = players
         self.apples = apples
 
     def next_action(self, player):
-        # Have your decision logic compute the next move here
-        # if self.agent == None:
-        #   position = self.players[player - 1]["location"]
-        #   # Player orientation
-        #   orientation = self.players[player - 1]["orientation"]
-        #   self.agent = A3C.A3CAgent(EPS_START,EPS_STOP,EPS_STEPS,position[0],position[1],ORIENTATION.index(orientation), self.apples)
-        # nm = self.agent.get_A3C_decision(player,self.players,self.apples)
-        # if (self.ended):
-        #   self.agent=None
-        if agenttype == 'greedy':
-            nm = greedy.get_greedy_decision(player, self.players, self.apples)
-        elif agenttype == 'random':
-            nm = random.get_random_decision(player, self.players, self.apples)
-        return nm
+      if not self.loaded:
+        self.agent.load()
+      nm = self.agent.next_action(player,self.players,self.apples)
+        # if agenttype == 'greedy':
+        #     nm = greedy.get_greedy_decision(player, self.players, self.apples)
+        # elif agenttype == 'random':
+        #     nm = random.get_random_decision(player, self.players, self.apples)
+      return nm
 
     def end_game(self):
         self.ended = True
