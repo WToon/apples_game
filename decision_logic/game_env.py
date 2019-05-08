@@ -1,5 +1,6 @@
 import random, itertools
 from decision_logic import dqn
+from decision_logic import random_agent as ra
 
 NB_AGENTS = 5
 NB_APPLES = 13
@@ -9,7 +10,7 @@ class AG_training_environment():
     def __init__(self, nb_apples=NB_APPLES, nb_agents=NB_AGENTS):
         self.apples = self._init_apples(nb_apples)                  # list of apples in the game
         self.worms = self._init_worms(nb_agents)                    # list of worms in the game
-        self.agents = [dqn.DQNAgent() for i in range(0,nb_agents)]  # list of agents (map to worms with index)
+        self.agents = [ra.RandomAgent() for i in range(0,nb_agents)]  # list of agents (map to worms with index)
 
     @staticmethod
     def _init_apples(nb_apples):
@@ -47,7 +48,7 @@ class AG_training_environment():
           if self.visiblePosition(ownPosition,position):
             players.append(worm)
           else:
-            players.append([{'location': ["?","?"], 'orientation': ["?","?"], 'score': worm.get('score')}])
+            players.append({'location': ["?","?"], 'orientation': ["?","?"], 'score': worm.get('score')})
         apples = []
         for apple in self.apples:
           if self.visiblePosition(ownPosition,apple):
@@ -108,7 +109,7 @@ class AG_training_environment():
         return (dx * dx) + (dy * dy);
 
     def resolveAction(self,index,action,players):
-      worm = self.worms.values()[index]
+      worm = self.worms.get(str(index))
       location=worm.get('location')
       x=location[0]
       y=location[1]
@@ -199,20 +200,22 @@ class AG_training_environment():
           newy = 16
         if not zapped:
           for player in players:
-            if player.get('location')==[newx,newy]:
+            if player['location'] == [newx,newy] and not (newx == x and newy == y):
               player['score'] -= 50
               zapped=True
+        print(zapped,x,y,players)
 
 
     def playOneGame(self):
       turn = 0
       print("BEGIN THE GAME")
-      while(len(self.apples)!=0 or turn == NB_TURNS):
+      while(len(self.apples)!=0 and turn != NB_TURNS):
         turn +=1
         print("TURN ", turn)
         self.turn()
         self.addApples()
       print("GAME HAS ENDED")
+      #print(self.worms)
 
 
 
