@@ -63,7 +63,6 @@ class DQNAgent():
         self.memory.append((state, action, reward, next_state, done))
 
     def act(self, state):
-        print("lenstate:",len(state))
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
         act_values = self.model.predict(state)
@@ -74,7 +73,6 @@ class DQNAgent():
         for state, action, reward, next_state, done in minibatch:
             target = reward
             if not done:
-                print(len(next_state))
                 target = (reward + self.gamma*np.amax(self.model.predict(next_state)[0]))
             target_f = self.model.predict(state)
             target_f[0][action] = target
@@ -91,13 +89,15 @@ class DQNAgent():
         self.model.save_weights(name)
 
     def next_action(self,player,players,apples):
-      self.state = ohe.encode_state(player,players,apples) #state to one hot encoding
+      self.state = np.reshape(ohe.encode_state(player,players,apples), [1, 6,15,15])
       #now we know the next state, we can train the model
       if len(self.previous_state) !=0:
         self.remember(self.previous_state, self.previous_action, self.previous_reward, self.state, False) #train based on the previous action
       if len(self.memory) > batch_size:
         self.replay(batch_size)  # train the agent by replaying the experiences of the episode
       action = self.act(self.state)
+      while action not in [0,1,2,3]:
+        action=self.act(self.state)
       self.previous_reward = self.get_reward_after_action(player,players,apples,ACTIONS[action])
       self.previous_action=action
       self.previous_state = self.state
