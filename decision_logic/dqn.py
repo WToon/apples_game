@@ -87,10 +87,10 @@ class DQNAgent():
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-    def load(self, name):
+    def load(self, name=output_dir+'/Weights'):
         self.model.load_weights(name)
 
-    def save(self, name):
+    def save(self, name=output_dir+'/Weights'):
         self.model.save_weights(name)
 
     def next_action(self,player,players,apples):
