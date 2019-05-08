@@ -6,6 +6,7 @@ from keras.layers import Dense
 from keras.layers import Conv2D
 from keras.optimizers import Adam
 from keras.models import Sequential
+from keras.utils import plot_model
 
 
 # Position, orientation, apples, other players (orientation/location)
@@ -45,11 +46,14 @@ class DQNAgent():
         self.model = self._build_model()
 
     def _build_model(self):
-        model = Sequential()
-        model.add(Conv2D(64, (2,2), input_shape=(6, 15, 15)))
-        model.add(Dense(24, activation='relu'))
-        model.add(Dense(self.action_size, activation='linear'))
+        model = Sequential(name="Q_Network")
+        model.add(Conv2D(64, (2,2), input_shape=(6, 15, 15), name="States"))
+        model.add(Dense(24, activation='relu', name="Extra_convergence"))
+        model.add(Dense(self.action_size, activation='linear', name="Probability_distribution_for_the_4_actions"))
         model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
+
+        plot_model(model, "model.png", show_shapes=True)
+
         return model
 
     def remember(self, state, action, reward, next_state, done):
@@ -80,3 +84,4 @@ class DQNAgent():
 
     def save(self, name):
         self.model.save_weights(name)
+
