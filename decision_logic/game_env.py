@@ -53,7 +53,7 @@ class AG_training_environment():
           if self.visiblePosition(ownPosition,apple):
             apples.append(apple)
         action = self.agents[index].next_action(players,apples)
-        agent['location'], agent['orientation'] , agent['score'] = self.resolveAction(index,action)
+        agent['location'], agent['orientation'] , agent['score'] = self.resolveAction(index,action,players)
 
     def visiblePosition(self,pos1,pos2):
       dx = abs(pos1[0] - pos2[0])
@@ -107,7 +107,7 @@ class AG_training_environment():
             dy = 16 - dy;
         return (dx * dx) + (dy * dy);
 
-    def resolveAction(self,index,action):
+    def resolveAction(self,index,action,players):
       worm = self.worms.values()[index]
       location=worm.get('location')
       x=location[0]
@@ -118,59 +118,91 @@ class AG_training_environment():
         neworientation = orientation
         if orientation=="up":
           newx=x
-          newy = (y-1)%16+1
+          newy = (y-1)%16
         elif orientation =="left":
-          newx = (x-1)%36+1
+          newx = (x-1)%36
           newy=y
         elif orientation == "right":
-          newx = (x+1)%36+1
+          newx = (x+1)%36
           newy=y
         else:
           newx = x
-          newy = (y+1)%16+1
+          newy = (y+1)%16
 
       elif action == "left":
         if orientation=="up":
           neworientation ="left"
-          newx=(x-1)%36+1
+          newx=(x-1)%36
           newy = y
         elif orientation =="left":
           neworientation ="down"
           newx = x
-          newy=(y+1)%16+1
+          newy=(y+1)%16
         elif orientation == "right":
           neworientation ="up"
           newx = x
-          newy=(y-1)%16+1
+          newy=(y-1)%16
         else:
           neworientation ="right"
-          newx = (x+1)%36+1
+          newx = (x+1)%36
           newy = y
       elif action=="right":
         if orientation=="up":
           neworientation ="right"
-          newx=(x+1)%36+1
+          newx=(x+1)%36
           newy = y
         elif orientation =="left":
           neworientation ="up"
           newx = x
-          newy=(y-1)%16+1
+          newy=(y-1)%16
         elif orientation == "right":
           neworientation ="down"
           newx = x
-          newy=(y+1)%16+1
+          newy=(y+1)%16
         else:
           neworientation ="left"
-          newx = (x-1)%36+1
+          newx = (x-1)%36
           newy = y
       else:
         neworientation =orientation
         newx=x
         newy=y
+        self.zap(x,y,orientation,players)
+        score -=1
+      if newx ==0:
+        newx = 36
+      if newy ==0:
+        newy = 16
       if [newx,newy] in self.apples:
         score+=1
         self.apples.remove([newx,newy])
       return([newx,newy],neworientation ,score)
+
+    def zap(self,x,y,orientation,players):
+      zapped=False
+      for i in range(1,8):
+        if orientation=='up':
+          newx = x
+          newy = (y-i)%16
+        elif orientation=='left':
+          newx = (x-i)%36
+          newy=y
+        elif orientation=='right':
+          newx = (x+i)%36
+          newy = y
+        else:
+          newx = x
+          newy = (y + i) % 16
+        if newx == 0:
+          newx=36
+        if newy==0:
+          newy = 16
+        if not zapped:
+          for player in players:
+            if player.get('location')==[newx,newy]:
+              player['score'] -= 50
+              zapped=True
+
 
     def playOneGame(self):
       turn = 0
