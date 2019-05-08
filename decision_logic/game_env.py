@@ -92,9 +92,12 @@ class AG_training_environment():
         for nbx in range(-2,3):
             for nby in range(-2,3):
                 if nbx !=0 or nby != 0:
-                    newx = (x+nbx)%36+1
-                    newx = (x+nbx)%36+1
-                    newy = (x+nby)%16+1
+                    newx = (x+nbx)%36
+                    newy = (y+nby)%16
+                    if newx ==0:
+                      newx = 36
+                    if newy ==0:
+                      newy = 16
                     if self.distance([x, y], [newx, newy]) <= 2 and [newx,newy] in self.apples:
                         nbNeighbors+=1
         return nbNeighbors
