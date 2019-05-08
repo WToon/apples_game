@@ -17,7 +17,7 @@ class AGTrainingEnvironment:
         """
         self.apples = self._init_apples(nb_apples)                      # list of apples in the game
         self.worms = self._init_worms(nb_agents)                        # list of worms in the game
-        self.agent = ra.RandomAgent()
+        self.agent = dqn.DQNAgent()
 
     @staticmethod
     def _init_apples(nb_apples):
@@ -55,7 +55,7 @@ class AGTrainingEnvironment:
             for apple in self.apples:
                 if self._is_visible_pos(agent_pos,apple):
                     apples.append(apple)
-            action = self.agent.next_action(players,apples)
+            action = self.agent.next_action(i+1,players,apples)
             print("Worm,Action : {}, {}".format(agent_worm, action))
             self.worms[i] = self._resolve_action(i,action,self.worms)
         self._add_apples()

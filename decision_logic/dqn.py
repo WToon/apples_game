@@ -45,7 +45,7 @@ class DQNAgent():
         self.epsilon_min = 0.01
         self.learning_rate = 0.001
         self.state = None
-        self.previous_state = None
+        self.previous_state = []
         self.previous_reward=None
         self.previous_action=None
 
@@ -56,13 +56,14 @@ class DQNAgent():
         model.add(Conv2D(64, (2,2), input_shape=(6, 15, 15)))
         model.add(Dense(24, activation='relu'))
         model.add(Dense(self.action_size, activation='linear'))
-        model.compile(loss='cross-entropy', optimizer=Adam(lr=self.learning_rate))
+        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
         return model
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
     def act(self, state):
+        print("lenstate:",len(state))
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
         act_values = self.model.predict(state)
@@ -73,6 +74,7 @@ class DQNAgent():
         for state, action, reward, next_state, done in minibatch:
             target = reward
             if not done:
+                print(len(next_state))
                 target = (reward + self.gamma*np.amax(self.model.predict(next_state)[0]))
             target_f = self.model.predict(state)
             target_f[0][action] = target
@@ -91,7 +93,8 @@ class DQNAgent():
     def next_action(self,player,players,apples):
       self.state = ohe.encode_state(player,players,apples) #state to one hot encoding
       #now we know the next state, we can train the model
-      self.remember(self.previous_state, self.previous_action, self.previous_reward, self.state, False) #train based on the previous action
+      if len(self.previous_state) !=0:
+        self.remember(self.previous_state, self.previous_action, self.previous_reward, self.state, False) #train based on the previous action
       if len(self.memory) > batch_size:
         self.replay(batch_size)  # train the agent by replaying the experiences of the episode
       action = self.act(self.state)
