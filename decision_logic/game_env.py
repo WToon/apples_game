@@ -1,10 +1,10 @@
 import random, itertools
 from decision_logic import dqn
 from decision_logic import random_agent as ra
-
+import os
 NB_AGENTS = 5
 NB_APPLES = 13
-NB_TURNS=100
+NB_TURNS=10000
 
 
 class AGTrainingEnvironment:
@@ -17,7 +17,7 @@ class AGTrainingEnvironment:
         """
         self.apples = self._init_apples(nb_apples)                      # list of apples in the game
         self.worms = self._init_worms(nb_agents)                        # list of worms in the game
-        self.agent = ra.RandomAgent()
+        self.agent = dqn.DQNAgent()
 
     @staticmethod
     def _init_apples(nb_apples):
@@ -55,8 +55,8 @@ class AGTrainingEnvironment:
             for apple in self.apples:
                 if self._is_visible_pos(agent_pos,apple):
                     apples.append(apple)
-            action = self.agent.next_action(players,apples)
-            print("Worm,Action : {}, {}".format(agent_worm, action))
+            action = self.agent.next_action(i+1,players,apples)
+            #print("Worm,Action : {}, {}".format(agent_worm, action))
             self.worms[i] = self._resolve_action(i,action,self.worms)
         self._add_apples()
         if verbose:
@@ -217,11 +217,15 @@ class AGTrainingEnvironment:
     def play(self, turns=NB_TURNS):
       turn = 0
       print("BEGINNING THE GAME")
+      if os.path.exists('model_output/dqn_agent/Weights'):
+        self.agent.load()
+        print("Load Weights")
       while len(self.apples)!=0 and turn != turns:
         turn +=1
         print("TURN ", turn)
-        self._play_turn(verbose=True)
+        self._play_turn(verbose=False)
       print("GAME HAS ENDED")
+      self.agent.save()
 
 
 Env = AGTrainingEnvironment()

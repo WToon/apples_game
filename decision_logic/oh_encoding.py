@@ -2,7 +2,7 @@ import numpy as np
 import time
 
 
-def encode_state(player="", players="", apples="", board_size=(15,15)):
+def encode_state(player, players="", apples="", board_size=(15,15)):
     """
     One-Hot encode the state as retrieved from the game to input for CNN
     :param players: list of other players 'location' and 'orientation'
@@ -25,26 +25,17 @@ def encode_state(player="", players="", apples="", board_size=(15,15)):
 
     # Load apples into board
     for location in apples:
-        print(location)
-        location[0] = (location[0]+dx)%36
-        location[1] = (location[1]+dy)%16
-        if location[0]==0:
-          location[0] = 36
-        if location[1]==0:
-          location[1]=36
+        location[0] = (location[0]+dx)%15
+        location[1] = (location[1]+dy)%15
         board_state[location[0]][location[1]] = oh_mapping["apple"]
 
     # Load other players into board
-    for player in players:
-        location = player["location"]
+    for worm in players:
+        location = worm["location"]
         if location == ["?","?"]: continue
         else:
-          location[0] = (location[0] + dx)%36
-          location[1] = (location[1] + dy)%16
-          if location[0] == 0:
-            location[0] = 36
-          if location[1] == 0:
-            location[1] = 36
-          board_state[location[0]][location[1]] = oh_mapping[player["orientation"]]
+          location[0] = (location[0] + dx)%15
+          location[1] = (location[1] + dy)%15
+          board_state[location[0]][location[1]] = oh_mapping[worm["orientation"]]
     return board_state
 

@@ -10,6 +10,7 @@ from keras.utils import plot_model
 from decision_logic import oh_encoding as ohe
 
 
+
 #array of the actions that can be played
 ACTIONS = ["move","left","right","fire"]
 # Position, orientation, apples, other players (orientation/location)
@@ -46,7 +47,7 @@ class DQNAgent():
         self.epsilon_min = 0.01
         self.learning_rate = 0.001
         self.state = None
-        self.previous_state = None
+        self.previous_state = []
         self.previous_reward=None
         self.previous_action=None
 
@@ -57,9 +58,9 @@ class DQNAgent():
         model.add(Conv2D(64, (2,2), input_shape=(6, 15, 15), name="States"))
         model.add(Dense(24, activation='relu', name="Extra_convergence"))
         model.add(Dense(self.action_size, activation='linear', name="Probability_distribution_for_the_4_actions"))
-        model.compile(loss='cross-entropy', optimizer=Adam(lr=self.learning_rate))
+        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
 
-        plot_model(model, "model.png", show_shapes=True)
+        #plot_model(model, "model.png", show_shapes=True)
 
         return model
 
@@ -86,19 +87,22 @@ class DQNAgent():
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-    def load(self, name):
+    def load(self, name=output_dir+'/Weights'):
         self.model.load_weights(name)
 
-    def save(self, name):
+    def save(self, name=output_dir+'/Weights'):
         self.model.save_weights(name)
 
     def next_action(self,player,players,apples):
-      self.state = ohe.encode_state(player,players,apples) #state to one hot encoding
+      self.state = np.reshape(ohe.encode_state(player,players,apples), [1, 6,15,15])
       #now we know the next state, we can train the model
-      self.remember(self.previous_state, self.previous_action, self.previous_reward, self.state, False) #train based on the previous action
+      if len(self.previous_state) !=0:
+        self.remember(self.previous_state, self.previous_action, self.previous_reward, self.state, False) #train based on the previous action
       if len(self.memory) > batch_size:
         self.replay(batch_size)  # train the agent by replaying the experiences of the episode
       action = self.act(self.state)
+      while action not in [0,1,2,3]:
+        action=self.act(self.state)
       self.previous_reward = self.get_reward_after_action(player,players,apples,ACTIONS[action])
       self.previous_action=action
       self.previous_state = self.state
