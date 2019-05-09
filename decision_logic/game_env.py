@@ -4,7 +4,8 @@ from decision_logic import random_agent as ra
 import os
 NB_AGENTS = 5
 NB_APPLES = 13
-NB_TURNS=10000
+NB_TURNS=100
+NB_GAMES=1000
 
 
 class AGTrainingEnvironment:
@@ -55,7 +56,7 @@ class AGTrainingEnvironment:
             for apple in self.apples:
                 if self._is_visible_pos(agent_pos,apple):
                     apples.append(apple)
-            action = self.agent.next_action(i+1,players,apples)
+            action = self.agent.next_action(i+1,players,apples,True)
             #print("Worm,Action : {}, {}".format(agent_worm, action))
             self.worms[i] = self._resolve_action(i,action,self.worms)
         self._add_apples()
@@ -178,7 +179,7 @@ class AGTrainingEnvironment:
         newx=x
         newy=y
         self._zap(x,y,orientation,players)
-        #score -=1
+        score -=1
       if newx ==0:
         newx = 36
       if newy ==0:
@@ -210,7 +211,7 @@ class AGTrainingEnvironment:
         if not zapped:
           for player in players:
             if player['location'] == [newx,newy] and not (newx == x and newy == y):
-              #player['score'] -= 50
+              player['score'] -= 50
               zapped=True
 
 
@@ -228,6 +229,13 @@ class AGTrainingEnvironment:
       print("Players: {}".format(self.worms))
       self.agent.save()
 
+    def play_nb_games(self,games=NB_GAMES):
+      for i in range(0,NB_GAMES):
+        print("NEW GAME : ", i)
+        self.apples = self._init_apples(NB_APPLES)  # list of apples in the game
+        self.worms = self._init_worms(NB_AGENTS)
+        self.play()
+
 
 Env = AGTrainingEnvironment()
-Env.play(1000)
+Env.play_nb_games()
