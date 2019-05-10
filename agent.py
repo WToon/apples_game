@@ -12,9 +12,9 @@ import logging
 import asyncio
 import websockets
 import json
-import decision_logic.greedy as greedy
+import decision_logic.greedy_agent as greedy
 import decision_logic.random_agent as random
-import decision_logic.dqn as dqn
+# import decision_logic.dqn as dqn
 import numpy as np
 
 
@@ -31,7 +31,7 @@ class Agent:
     def __init__(self, player):
         self.player = {player}
         self.ended = False
-        self.agent = dqn.DQNAgent()
+        self.agent = greedy.GreedyAgent()
         self.loaded = False
 
     def register_action(self, players, apples):
@@ -39,8 +39,6 @@ class Agent:
         self.apples = apples
 
     def next_action(self, player):
-      if not self.loaded:
-        self.agent.load('decision_logic/model_output/dqn_agent/Weights')
       nm = self.agent.next_action(player,self.players,self.apples)
         # if agenttype == 'greedy':
         #     nm = greedy.get_greedy_decision(player, self.players, self.apples)
@@ -74,6 +72,7 @@ async def handler(websocket, path):
                     # Start the game
                     games[game].register_action(msg["players"], msg["apples"])
                     nm = games[game].next_action(1)
+                    print(nm)
                     if nm is None:
                         # Game over
                         logger.info("Generation of start move failed")
