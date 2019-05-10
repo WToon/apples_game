@@ -12,7 +12,7 @@ import logging
 import asyncio
 import websockets
 import json
-import decision_logic.greedy as greedy
+import decision_logic.greedy_agent as greedy
 import decision_logic.random_agent as random
 import decision_logic.dqn as dqn
 import decision_logic.WormEnv as wormEnv
@@ -32,7 +32,7 @@ class Agent:
     def __init__(self, player):
         self.player = {player}
         self.ended = False
-        self.agent = dqn.DQNAgent()
+        self.agent = greedy.GreedyAgent()
         self.loaded = False
         self.agent = wormEnv.Agent(EPS_START,EPS_STOP,EPS_STEPS,1,1,'left',5)
         #self.a3cagent = a3c.A3CAgent(0,100,1,15,15,'left',5)
@@ -78,6 +78,7 @@ async def handler(websocket, path):
                     # Start the game
                     games[game].register_action(msg["players"], msg["apples"])
                     nm = games[game].next_action(1)
+                    print(nm)
                     if nm is None:
                         # Game over
                         logger.info("Generation of start move failed")

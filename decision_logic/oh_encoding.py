@@ -25,9 +25,10 @@ def encode_state(player, players="", apples="", board_size=(15,15)):
 
     # Load apples into board
     for location in apples:
-        location[0] = (location[0]+dx)%15
-        location[1] = (location[1]+dy)%15
-        board_state[location[0]][location[1]] = oh_mapping["apple"]
+        x,y = location
+        x = (x+dx)%15
+        y = (y+dy)%15
+        board_state[x][y] = oh_mapping["apple"]
 
     # Load other players into board
     for worm in players:
