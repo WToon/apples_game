@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-import gym, time, random, threading
+import gym, time, random, threading, multiprocessing
 import math
 import gym
 from gym import spaces, logger
@@ -32,7 +32,7 @@ NUM_STATE = 3
 NONE_STATE = np.zeros(NUM_STATE)
 
 RUN_TIME = 100
-THREADS = 8
+THREADS = multiprocessing.cpu_count()
 OPTIMIZERS = 2
 
 FilePath = "D:\\Users\\Wouter\\Documents\\Repos\\apples_game\\decision_logic\\trainedModel.h5"
