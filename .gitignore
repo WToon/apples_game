@@ -5,7 +5,7 @@ Thumbs.db
 
 node_modules/
 venv/
-.pyc
+*.pyc
 
 !.git*
 !.eslint*
