@@ -93,19 +93,21 @@ class DQNAgent():
     def save(self, name=output_dir+'/Weights'):
         self.model.save_weights(name)
 
-    def next_action(self,player,players,apples):
+    def next_action(self,player,players,apples, training):
       self.state = np.reshape(ohe.encode_state(player,players,apples), [1, 6,15,15])
       #now we know the next state, we can train the model
-      if len(self.previous_state) !=0:
-        self.remember(self.previous_state, self.previous_action, self.previous_reward, self.state, False) #train based on the previous action
-      if len(self.memory) > batch_size:
-        self.replay(batch_size)  # train the agent by replaying the experiences of the episode
+      if training:
+        if len(self.previous_state) !=0:
+          self.remember(self.previous_state, self.previous_action, self.previous_reward, self.state, False) #train based on the previous action
+        if len(self.memory) > batch_size:
+          self.replay(batch_size)  # train the agent by replaying the experiences of the episode
       action = self.act(self.state)
       while action not in [0,1,2,3]:
         action=self.act(self.state)
-      self.previous_reward = self.get_reward_after_action(player,players,apples,ACTIONS[action])
-      self.previous_action=action
-      self.previous_state = self.state
+      if training:
+        self.previous_reward = self.get_reward_after_action(player,players,apples,ACTIONS[action])
+        self.previous_action=action
+        self.previous_state = self.state
       return ACTIONS[action]
 
 
