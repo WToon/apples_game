@@ -40,8 +40,8 @@ class Agent:
 
     def next_action(self, player):
       if not self.loaded:
-        self.agent.load('decision_logic/model_output/dqn_agent/Weights')
-      nm = self.agent.next_action(player,self.players,self.apples,False)
+        self.agent.load('decision_logic/model_output/dqn_agent/Weights3.0')
+      nm = self.agent.next_action(player,self.players,self.apples,True)
         # if agenttype == 'greedy':
         #     nm = greedy.get_greedy_decision(player, self.players, self.apples)
         # elif agenttype == 'random':

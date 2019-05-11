@@ -1,24 +1,29 @@
 import random, itertools
-from decision_logic import dqn
-from decision_logic import random_agent as ra
 import os
-NB_AGENTS = 5
+import threading
+from decision_logic import dqn
+from decision_logic import a3cbrain as bra
+from decision_logic import random_agent as ra
+NB_AGENTS = 2
 NB_APPLES = 13
 NB_TURNS=100
 NB_GAMES=1000
 
-
-class AGTrainingEnvironment:
-
-    def __init__(self, nb_apples=NB_APPLES, nb_agents=NB_AGENTS):
+class AGTrainingEnvironment(threading.Thread):
+    stop_signal = False
+    def __init__(self, nb_apples=NB_APPLES, nb_agents=NB_AGENTS,training=False, brain = True):
         """
         An 'apples game' training environment, initialized with random agents
         :param nb_apples: The initial number of apples
         :param nb_agents: The number of agents
         """
+        threading.Thread.__init__(self)
         self.apples = self._init_apples(nb_apples)                      # list of apples in the game
-        self.worms = self._init_worms(nb_agents)                        # list of worms in the game
-        self.agent = dqn.DQNAgent()
+        self.worms = self._init_worms(nb_agents)
+        from decision_logic import newa3c as newa
+        self.agent = newa.Agent(training,brain)
+        self.mean_scores=[]
+        self.training = training
 
     @staticmethod
     def _init_apples(nb_apples):
@@ -64,6 +69,8 @@ class AGTrainingEnvironment:
             print("Apples: {}".format(self.apples))
             print("Players: {}".format(self.worms))
 
+    def stop(self):
+      self.stop_signal = True
 
     def _is_visible_pos(self,pos1,pos2):
       dx = abs(pos1[0] - pos2[0])
@@ -218,24 +225,41 @@ class AGTrainingEnvironment:
     def play(self, turns=NB_TURNS):
       turn = 0
       print("BEGINNING THE GAME")
-      if os.path.exists('model_output/dqn_agent/Weights'):
-        self.agent.load()
-        print("Load Weights")
+      # if os.path.exists('model_output/a3c_agent/Weights'):
+      #   self.agent.load()
+      #   print("Load Weights")
       while len(self.apples)!=0 and turn != turns:
         turn +=1
-        print("TURN ", turn)
+        #print("TURN ", turn)
         self._play_turn(verbose=False)
       print("GAME HAS ENDED")
       print("Players: {}".format(self.worms))
-      self.agent.save()
+      mean_score = 0
+      for worm in self.worms:
+        mean_score+=worm.get('score')
+      self.mean_scores.append(mean_score/NB_AGENTS)
+      print("Mean score: ", mean_score/NB_AGENTS)
+      print("Mean scores: ",self.mean_scores)
+      #self.agent.save()
 
     def play_nb_games(self,games=NB_GAMES):
       for i in range(0,NB_GAMES):
+
         print("NEW GAME : ", i)
+        self.agent.reset()
+        self.apples = self._init_apples(NB_APPLES)  # list of apples in the game
+        self.worms = self._init_worms(NB_AGENTS)
+        self.play()
+    def run(self):
+      print("RUN ENV")
+      while not self.stop_signal:
+        self.agent.reset()
         self.apples = self._init_apples(NB_APPLES)  # list of apples in the game
         self.worms = self._init_worms(NB_AGENTS)
         self.play()
 
 
-Env = AGTrainingEnvironment()
+
+
+Env = AGTrainingEnvironment(13,2,True)
 Env.play_nb_games()
