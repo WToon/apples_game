@@ -12,9 +12,10 @@ import logging
 import asyncio
 import websockets
 import json
-import decision_logic.greedy as greedy
+import decision_logic.greedy_agent as greedy
 import decision_logic.random_agent as random
 import decision_logic.dqn as dqn
+import decision_logic.WormEnv as wormEnv
 import numpy as np
 
 
@@ -31,22 +32,25 @@ class Agent:
     def __init__(self, player):
         self.player = {player}
         self.ended = False
-        self.agent = dqn.DQNAgent()
+        self.agent = greedy.GreedyAgent()
         self.loaded = False
+        self.agent = wormEnv.Agent(EPS_START,EPS_STOP,EPS_STEPS,1,1,'left',5)
+        #self.a3cagent = a3c.A3CAgent(0,100,1,15,15,'left',5)
 
     def register_action(self, players, apples):
         self.players = players
         self.apples = apples
 
     def next_action(self, player):
-      if not self.loaded:
-        self.agent.load('decision_logic/model_output/dqn_agent/Weights3.0')
-      nm = self.agent.next_action(player,self.players,self.apples,True)
+        """if not self.loaded:
+        self.agent.load('decision_logic/model_output/dqn_agent/Weights')
+        nm = self.agent.next_action(player,self.players,self.apples,False)
         # if agenttype == 'greedy':
         #     nm = greedy.get_greedy_decision(player, self.players, self.apples)
         # elif agenttype == 'random':
         #     nm = random.get_random_decision(player, self.players, self.apples)
-      return nm
+        return nm"""""
+        return self.agent.act()
 
     def end_game(self):
         self.ended = True
@@ -74,6 +78,7 @@ async def handler(websocket, path):
                     # Start the game
                     games[game].register_action(msg["players"], msg["apples"])
                     nm = games[game].next_action(1)
+                    print(nm)
                     if nm is None:
                         # Game over
                         logger.info("Generation of start move failed")

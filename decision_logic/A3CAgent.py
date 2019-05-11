@@ -12,6 +12,8 @@ from keras.layers import *
 from keras import optimizers
 from keras import backend as K
 import os
+from keras.utils import plot_model
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 NB_APPLES = 50
 NB_AGENTS = 5
@@ -33,7 +35,7 @@ RUN_TIME = 100
 THREADS = multiprocessing.cpu_count()
 OPTIMIZERS = 2
 
-FilePath = "E:/Wouter/Repositories/apples_game/decision_logic/trainedModel.h5"
+FilePath = "D:\\Users\\Wouter\\Documents\\Repos\\apples_game\\decision_logic\\trainedModel.h5"
 THREAD_DELAY = 0.001
 MIN_BATCH = 4*32
 LEARNING_RATE = 5e-3
@@ -42,6 +44,8 @@ LOSS_V = .5  # v loss coefficient
 LOSS_ENTROPY = .01  # entropy coefficient
 frames = 0
 class A3CAgent:
+
+
   def __init__(self, eps_start, eps_end, eps_steps, x, y, orientation, apples):
     self.eps_start = eps_start
     self.eps_end = eps_end
@@ -197,11 +201,16 @@ class Brain:
     self.default_graph.finalize()  # avoid modifications
 
   def _build_model(self):
+    #model = load_model(FilePath)
+    l_input = Input(batch_shape=(None, NUM_STATE))
+    l_dense = Dense(16, activation='relu')(l_input)
 
+    out_actions = Dense(NUM_ACTIONS, activation='softmax')(l_dense)
+    out_value = Dense(1, activation='linear')(l_dense)
 
-    model = load_model(FilePath)
+    model = Model(inputs=[l_input], outputs=[out_actions, out_value])
     model._make_predict_function()  # have to initialize before threading
-
+    plot_model(model, to_file='model_init.png', show_shapes=True)
     return model
 
   def _build_graph(self, model):
