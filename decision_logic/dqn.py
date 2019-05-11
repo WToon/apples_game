@@ -1,4 +1,4 @@
-import os
+
 import random
 import numpy as np
 from collections import deque
@@ -7,17 +7,16 @@ from keras.layers import Conv2D
 from keras.optimizers import Adam
 from keras.models import Sequential
 from keras.utils import plot_model
+from keras import backend as K
 from decision_logic import oh_encoding as ohe
-
-
-
+import os
 #array of the actions that can be played
-ACTIONS = ["move","left","right","fire"]
+ACTIONS = ["move","left","right"]
 # Position, orientation, apples, other players (orientation/location)
 state_size = 15*15*6
+# move, left, right
+action_size = 3
 
-# move, left, right, fire
-action_size = 4
 
 # Hyper-paramater (power of 2)
 batch_size = 32
@@ -51,14 +50,15 @@ class DQNAgent():
         self.previous_reward=None
         self.previous_action=None
 
+
         self.model = self._build_model()
 
     def _build_model(self):
         model = Sequential(name="Q_Network")
         model.add(Conv2D(64, (2,2), input_shape=(6, 15, 15), name="States"))
-        model.add(Dense(24, activation='relu', name="Extra_convergence"))
+        model.add(Dense(24, activation='softmax', name="Extra_convergence"))
         model.add(Dense(self.action_size, activation='linear', name="Probability_distribution_for_the_4_actions"))
-        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
+        model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=self.learning_rate))
 
         #plot_model(model, "model.png", show_shapes=True)
 
@@ -87,10 +87,10 @@ class DQNAgent():
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-    def load(self, name=output_dir+'/Weights'):
+    def load(self, name=output_dir+'/Weights3.0'):
         self.model.load_weights(name)
 
-    def save(self, name=output_dir+'/Weights'):
+    def save(self, name=output_dir+'/Weights3.0'):
         self.model.save_weights(name)
 
     def next_action(self,player,players,apples, training):
@@ -102,7 +102,7 @@ class DQNAgent():
         if len(self.memory) > batch_size:
           self.replay(batch_size)  # train the agent by replaying the experiences of the episode
       action = self.act(self.state)
-      while action not in [0,1,2,3]:
+      while action not in [0,1,2]:
         action=self.act(self.state)
       if training:
         self.previous_reward = self.get_reward_after_action(player,players,apples,ACTIONS[action])
@@ -169,3 +169,19 @@ class DQNAgent():
         reward += 1
       return reward
 
+    def reset(self):
+      self.memory = deque(maxlen=2000)
+      # Discount factor
+      self.gamma = 0.95
+      # Exploration rate (randomly explore new actions)
+      # Initially exploration >> exploitation
+      self.epsilon = 1.0
+      # With ongoing playing, we shift towards exploitation
+      self.epsilon_decay = 0.995
+      # Epsilon floor as to not stop exploring
+      self.epsilon_min = 0.01
+      self.learning_rate = 0.001
+      self.state = None
+      self.previous_state = []
+      self.previous_reward = None
+      self.previous_action = None
