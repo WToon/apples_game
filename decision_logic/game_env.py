@@ -6,8 +6,8 @@ from decision_logic import a3cbrain as bra
 from decision_logic import random_agent as ra
 NB_AGENTS = 2
 NB_APPLES = 13
-NB_TURNS=100
-NB_GAMES=1000
+NB_TURNS= 250
+NB_GAMES=100
 
 class AGTrainingEnvironment(threading.Thread):
     stop_signal = False
@@ -21,7 +21,8 @@ class AGTrainingEnvironment(threading.Thread):
         self.apples = self._init_apples(nb_apples)                      # list of apples in the game
         self.worms = self._init_worms(nb_agents)
         from decision_logic import newa3c as newa
-        self.agent = newa.Agent(training,brain)
+        self.agent = dqn.DQNAgent()
+        #self.agent = newa.Agent(training,brain)
         self.mean_scores=[]
         self.training = training
 
@@ -49,6 +50,8 @@ class AGTrainingEnvironment(threading.Thread):
 
     def _play_turn(self,verbose=True):
         for i in range(0,len(self.worms)):
+
+            worms = self.worms
             agent_worm = self.worms[i]
             agent_pos = agent_worm['location']
             players = []
@@ -62,8 +65,12 @@ class AGTrainingEnvironment(threading.Thread):
                 if self._is_visible_pos(agent_pos,apple):
                     apples.append(apple)
             action = self.agent.next_action(i+1,players,apples,True)
-            #print("Worm,Action : {}, {}".format(agent_worm, action))
-            self.worms[i] = self._resolve_action(i,action,self.worms)
+            self.worms = worms
+            newPos, newOri, newScore = self._resolve_action(i,action,self.worms)
+            self.worms[i] ['location']= newPos
+            self.worms[i] ['orientation']=newOri
+            self.worms[i] ['score'] = newScore
+
         self._add_apples()
         if verbose:
             print("Apples: {}".format(self.apples))
@@ -194,7 +201,7 @@ class AGTrainingEnvironment(threading.Thread):
       if [newx,newy] in self.apples:
         score+=1
         self.apples.remove([newx,newy])
-      return {'location':[newx,newy], 'orientation':neworientation, 'score':score}
+      return ([newx,newy],neworientation, score)
 
     def _zap(self,x,y,orientation,players):
       zapped=False
@@ -225,14 +232,13 @@ class AGTrainingEnvironment(threading.Thread):
     def play(self, turns=NB_TURNS):
       turn = 0
       print("BEGINNING THE GAME")
-      # if os.path.exists('model_output/a3c_agent/Weights'):
-      #   self.agent.load()
-      #   print("Load Weights")
       while len(self.apples)!=0 and turn != turns:
         turn +=1
-        #print("TURN ", turn)
+        print("TURN ", turn)
         self._play_turn(verbose=False)
-      print("GAME HAS ENDED")
+
+
+      print("GAME HAS ENDED", turn, len(self.apples))
       print("Players: {}".format(self.worms))
       mean_score = 0
       for worm in self.worms:
@@ -240,7 +246,7 @@ class AGTrainingEnvironment(threading.Thread):
       self.mean_scores.append(mean_score/NB_AGENTS)
       print("Mean score: ", mean_score/NB_AGENTS)
       print("Mean scores: ",self.mean_scores)
-      #self.agent.save()
+      self.agent.save()
 
     def play_nb_games(self,games=NB_GAMES):
       for i in range(0,NB_GAMES):
@@ -250,6 +256,7 @@ class AGTrainingEnvironment(threading.Thread):
         self.apples = self._init_apples(NB_APPLES)  # list of apples in the game
         self.worms = self._init_worms(NB_AGENTS)
         self.play()
+
     def run(self):
       print("RUN ENV")
       while not self.stop_signal:

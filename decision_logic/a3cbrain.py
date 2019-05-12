@@ -5,6 +5,8 @@ from keras.models import *
 from keras.layers import *
 from keras import backend as K
 
+from keras.optimizers import Adam
+import os
 # -- constants
 ENV = 'CartPole-v0'
 ACTIONS = ['move','left','right']
@@ -16,7 +18,7 @@ THREAD_DELAY = 0.001
 
 GAMMA = 0.99
 
-N_STEP_RETURN = 8
+N_STEP_RETURN = 6
 GAMMA_N = GAMMA ** N_STEP_RETURN
 
 EPS_START = 0.4
@@ -41,6 +43,9 @@ class Brain:
     K.manual_variable_initialization(True)
 
     self.model = self._build_model()
+    if os.path.exists('model_output/a3c_agent/WeightsafterTraining'):
+        self.model.load_weights('model_output/a3c_agent/WeightsafterTraining')
+        print("Load Weights")
     self.graph = self._build_graph(self.model)
 
     self.session.run(tf.global_variables_initializer())
@@ -51,12 +56,11 @@ class Brain:
 
     l_input = Input(batch_shape=(None, NUM_STATE))
     l_dense = Dense(16, activation='relu')(l_input)
-
     out_actions = Dense(NUM_ACTIONS, activation='softmax')(l_dense)
     out_value = Dense(1, activation='linear')(l_dense)
 
     model = Model(inputs=[l_input], outputs=[out_actions, out_value])
-    model.compile(optimizer='sgd', loss='mse')
+    #model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=0.001))
 
     model._make_predict_function()  # have to initialize before threading
 
@@ -69,13 +73,13 @@ class Brain:
 
     p, v = model(s_t)
 
-    log_prob = tf.log(tf.reduce_sum(p * a_t, axis=1, keep_dims=True) + 1e-10)
+    log_prob = tf.log(tf.reduce_sum(p * a_t, axis=1, keepdims=True) + 1e-10)
     advantage = r_t - v
 
     loss_policy = - log_prob * tf.stop_gradient(advantage)  # maximize policy
     loss_value = LOSS_V * tf.square(advantage)  # minimize value error
     entropy = LOSS_ENTROPY * tf.reduce_sum(p * tf.log(p + 1e-10), axis=1,
-                                           keep_dims=True)  # maximize entropy (regularization)
+                                           keepdims=True)  # maximize entropy (regularization)
 
     loss_total = tf.reduce_mean(loss_policy + loss_value + entropy)
 
@@ -83,6 +87,7 @@ class Brain:
     minimize = optimizer.minimize(loss_total)
 
     return s_t, a_t, r_t, minimize
+
 
   def optimize(self):
     if len(self.train_queue[0]) < MIN_BATCH:
@@ -95,7 +100,6 @@ class Brain:
 
       s, a, r, s_, s_mask = self.train_queue
       self.train_queue = [[], [], [], [], []]
-    print("OPTIMIZE")
     s = np.vstack(s)
     a = np.vstack(a)
     r = np.vstack(r)

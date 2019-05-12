@@ -11,20 +11,20 @@ if not os.path.exists('model_output/a3c_agent'):
     os.makedirs(output_dir)
 # -- constants
 ACTIONS = ['move','left','right']
-RUN_TIME = 60
-THREADS = 4
-OPTIMIZERS = 2
+RUN_TIME = 0
+THREADS = 0
+OPTIMIZERS = 0
 THREAD_DELAY = 0.001
 
 
 GAMMA = 0.99
 
-N_STEP_RETURN = 8
+N_STEP_RETURN = 4
 GAMMA_N = GAMMA ** N_STEP_RETURN
 
 EPS_START = 0.4
 EPS_STOP = .15
-EPS_STEPS = 75
+EPS_STEPS = 150
 
 MIN_BATCH = 32
 LEARNING_RATE = 5e-3
@@ -43,6 +43,7 @@ class Agent:
       self.eps_steps =  75
       self.memory = []  # used for n_step return
       self.state = None
+      self.rewards = []
       self.previous_state = []
       self.previous_reward = None
       self.previous_action = None
@@ -58,11 +59,12 @@ class Agent:
       self.frames = 0
 
     def reset(self):
+      self.rewards:[]
       self.R=0
+      self.eps_start = 0.95
+      self.eps_end = 0.01
+      self.eps_steps = 75
       self.frames = 0
-      self.memory = []
-      # Discount factor
-      self.gamma = 0
       # Exploration rate (randomly explore new actions)
       # Initially exploration >> exploitation
       self.epsilon = 1.0
@@ -131,10 +133,11 @@ class Agent:
         newy = 16
       if [newx, newy] in apples:
         reward += 1
+
       return reward
 
     def next_action(self,player,players,apples,training):
-      if (not self.optimized):
+      if (not self.optimized and THREADS != 0):
         self.optimized=True
         from decision_logic import game_env as ge
         from decision_logic import a3coptimizer as opt
@@ -162,16 +165,20 @@ class Agent:
         print("Training finished")
         self.save(output_dir + '/WeightsafterTraining')
 
-      self.state = np.reshape(ohe.encode_state(player, players, apples), [1, 1350])
+      self.state = np.reshape(ohe.encode_state(player, players, apples), [1,1350])
+
       # now we know the next state, we can train the model
       if training:
         if len(self.previous_state) != 0:
           self.train(self.previous_state, self.previous_action, self.previous_reward, self.state)  # train based on the previous action
+
       action = self.act(self.state)
       while action not in [0, 1, 2]:
         action = self.act(self.state)
+
       if training:
         self.previous_reward = self.get_reward_after_action(player, players, apples, ACTIONS[action])
+        self.rewards.append(self.previous_reward)
         self.previous_action = action
         self.previous_state = self.state
       return ACTIONS[action]
@@ -195,7 +202,6 @@ class Agent:
         p = self.brain.predict_p(s)[0]
         # a = np.argmax(p)
         a = np.random.choice(NUM_ACTIONS, p=p)
-
         return a
 
     def train(self, s, a, r, s_):

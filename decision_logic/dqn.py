@@ -49,8 +49,6 @@ class DQNAgent():
         self.previous_state = []
         self.previous_reward=None
         self.previous_action=None
-
-
         self.model = self._build_model()
 
     def _build_model(self):
@@ -87,10 +85,10 @@ class DQNAgent():
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-    def load(self, name=output_dir+'/Weights3.0'):
+    def load(self, name=output_dir+'/Weights'):
         self.model.load_weights(name)
 
-    def save(self, name=output_dir+'/Weights3.0'):
+    def save(self, name=output_dir+'/Weights'):
         self.model.save_weights(name)
 
     def next_action(self,player,players,apples, training):

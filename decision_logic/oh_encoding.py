@@ -12,6 +12,7 @@ def encode_state(player, players="", apples="", board_size=(15,15)):
     player_location = players[player-1].get('location')
     dx = 8-player_location[0]
     dy = 8-player_location[1]
+
     # One-Hot mapping dict
     oh_mapping = {'empty':  np.array([1, 0, 0, 0, 0, 0]),
                   'apple':  np.array([0, 1, 0, 0, 0, 0]),
@@ -22,21 +23,23 @@ def encode_state(player, players="", apples="", board_size=(15,15)):
 
     # Initialise an empty board_state
     board_state = [[oh_mapping["empty"] for i in range(board_size[0])] for i in range(board_size[1])]
-
     # Load apples into board
     for location in apples:
         x,y = location
         x = (x+dx)%15
         y = (y+dy)%15
         board_state[x][y] = oh_mapping["apple"]
-
     # Load other players into board
     for worm in players:
         location = worm["location"]
-        if location == ["?","?"]: continue
+
+        if location == ["?","?"]:
+            newlocation=["?","?"]
+
         else:
-          location[0] = (location[0] + dx)%15
-          location[1] = (location[1] + dy)%15
-          board_state[location[0]][location[1]] = oh_mapping[worm["orientation"]]
+          newlocation=[]
+          newlocation.append((location[0] + dx)%15)
+          newlocation.append((location[1] + dy)%15)
+          board_state[newlocation[0]][newlocation[1]] = oh_mapping[worm["orientation"]]
     return board_state
 

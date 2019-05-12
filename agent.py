@@ -13,9 +13,7 @@ import asyncio
 import websockets
 import json
 import decision_logic.greedy_agent as greedy
-import decision_logic.random_agent as random
-import decision_logic.dqn as dqn
-import decision_logic.WormEnv as wormEnv
+import decision_logic.newa3c as na3c
 import numpy as np
 
 
@@ -25,7 +23,6 @@ agentclass = None
 EPS_START = 0.4
 EPS_STOP = .15
 EPS_STEPS = 750
-agenttype = "greedy"
 
 ORIENTATION = ["up","left","right","down"]
 class Agent:
@@ -34,7 +31,7 @@ class Agent:
         self.ended = False
         self.agent = greedy.GreedyAgent()
         self.loaded = False
-        self.agent = wormEnv.Agent(EPS_START,EPS_STOP,EPS_STEPS,1,1,'left',5)
+        self.agent = na3c.Agent()
         #self.a3cagent = a3c.A3CAgent(0,100,1,15,15,'left',5)
 
     def register_action(self, players, apples):
@@ -50,7 +47,7 @@ class Agent:
         # elif agenttype == 'random':
         #     nm = random.get_random_decision(player, self.players, self.apples)
         return nm"""""
-        return self.agent.act()
+        return self.agent.next_action(player,self.players,self.apples,False)
 
     def end_game(self):
         self.ended = True
