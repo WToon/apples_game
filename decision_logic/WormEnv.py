@@ -55,6 +55,7 @@ class WormsEnvironment(threading.Thread):
         self.apples = []
         self.worms = []
         self.steps = 0
+        self.orientations = ['left','right','up']
 
         #add the apples
         for i in range(0,NB_APPLES):
@@ -272,6 +273,7 @@ class Agent:
         self.memory = []  # used for n_step return
         self.R = 0.
         self.visibleApples = apples
+        self.orientations = ['left','right','up']
 
     def getEpsilon(self):
         if (frames >= self.eps_steps):
@@ -285,12 +287,12 @@ class Agent:
         global frames;
         frames = frames + 1
 
-        if random.random() < eps:
+        if random.random() < eps: #explore
             return random.randint(0, NUM_ACTIONS - 1)
 
-        else:
-            s = np.array([[s]])
-            p = brain.predict_p(s)[0]
+        else: #exploit
+            sarr = np.array([s])
+            p = brain.predict_p(sarr)[0]
             a = np.random.choice(NUM_ACTIONS, p=p)
             return a
 
@@ -429,6 +431,7 @@ class Brain:
 
     def predict_p(self, s):
         with self.default_graph.as_default():
+            #s = np.reshape(s,[1,2])
             p, v = self.model.predict(s)
             return p
 
