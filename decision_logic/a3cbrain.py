@@ -43,9 +43,8 @@ class Brain:
     K.manual_variable_initialization(True)
 
     self.model = self._build_model()
-    if os.path.exists('model_output/a3c_agent/WeightsafterTraining'):
-        self.model.load_weights('model_output/a3c_agent/WeightsafterTraining')
-        print("Load Weights")
+    if os.path.exists('model_output/a3c_agent/WeightsafterTraining2'):
+        self.model.load_weights('model_output/a3c_agent/WeightsafterTraining2')
     self.graph = self._build_graph(self.model)
 
     self.session.run(tf.global_variables_initializer())

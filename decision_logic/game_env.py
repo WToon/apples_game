@@ -7,7 +7,7 @@ from decision_logic import random_agent as ra
 NB_AGENTS = 2
 NB_APPLES = 13
 NB_TURNS= 250
-NB_GAMES=100
+NB_GAMES= 100
 
 class AGTrainingEnvironment(threading.Thread):
     stop_signal = False
@@ -21,8 +21,8 @@ class AGTrainingEnvironment(threading.Thread):
         self.apples = self._init_apples(nb_apples)                      # list of apples in the game
         self.worms = self._init_worms(nb_agents)
         from decision_logic import newa3c as newa
-        self.agent = dqn.DQNAgent()
-        #self.agent = newa.Agent(training,brain)
+        #self.agent = dqn.DQNAgent()
+        self.agent = newa.Agent(training,brain)
         self.mean_scores=[]
         self.training = training
 
@@ -234,37 +234,35 @@ class AGTrainingEnvironment(threading.Thread):
       print("BEGINNING THE GAME")
       while len(self.apples)!=0 and turn != turns:
         turn +=1
-        print("TURN ", turn)
+        #print("TURN ", turn)
         self._play_turn(verbose=False)
-
-
       print("GAME HAS ENDED", turn, len(self.apples))
-      print("Players: {}".format(self.worms))
+      #print("Players: {}".format(self.worms))
       mean_score = 0
       for worm in self.worms:
-        mean_score+=worm.get('score')
+        mean_score += worm.get('score')
       self.mean_scores.append(mean_score/NB_AGENTS)
-      print("Mean score: ", mean_score/NB_AGENTS)
-      print("Mean scores: ",self.mean_scores)
-      self.agent.save()
+      #print("Mean score: ", mean_score/NB_AGENTS)
+      print("Mean scores : ",self.mean_scores)
+
+
+
 
     def play_nb_games(self,games=NB_GAMES):
       for i in range(0,NB_GAMES):
-
         print("NEW GAME : ", i)
         self.agent.reset()
         self.apples = self._init_apples(NB_APPLES)  # list of apples in the game
         self.worms = self._init_worms(NB_AGENTS)
         self.play()
 
+
     def run(self):
-      print("RUN ENV")
       while not self.stop_signal:
         self.agent.reset()
         self.apples = self._init_apples(NB_APPLES)  # list of apples in the game
         self.worms = self._init_worms(NB_AGENTS)
         self.play()
-
 
 
 

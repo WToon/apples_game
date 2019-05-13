@@ -11,15 +11,15 @@ if not os.path.exists('model_output/a3c_agent'):
     os.makedirs(output_dir)
 # -- constants
 ACTIONS = ['move','left','right']
-RUN_TIME = 0
-THREADS = 0
-OPTIMIZERS = 0
+RUN_TIME = 300
+THREADS = 8
+OPTIMIZERS = 2
 THREAD_DELAY = 0.001
 
 
 GAMMA = 0.99
 
-N_STEP_RETURN = 4
+N_STEP_RETURN = 8
 GAMMA_N = GAMMA ** N_STEP_RETURN
 
 EPS_START = 0.4
@@ -40,7 +40,7 @@ class Agent:
     def __init__(self,training=False,brain=True):
       self.eps_start = 0.95
       self.eps_end = 0.01
-      self.eps_steps =  75
+      self.eps_steps =  150
       self.memory = []  # used for n_step return
       self.state = None
       self.rewards = []
@@ -48,6 +48,7 @@ class Agent:
       self.previous_reward = None
       self.previous_action = None
       self.optimized = not training
+      self.training = training
       self.R=0
 
       from decision_logic import a3cbrain as br
@@ -63,7 +64,7 @@ class Agent:
       self.R=0
       self.eps_start = 0.95
       self.eps_end = 0.01
-      self.eps_steps = 75
+      self.eps_steps = 150
       self.frames = 0
       # Exploration rate (randomly explore new actions)
       # Initially exploration >> exploitation
@@ -136,34 +137,37 @@ class Agent:
 
       return reward
 
-    def next_action(self,player,players,apples,training):
-      if (not self.optimized and THREADS != 0):
-        self.optimized=True
+    def run_threads(self,i):
         from decision_logic import game_env as ge
         from decision_logic import a3coptimizer as opt
-        envs = [ge.AGTrainingEnvironment(13,2,False,self.brain) for i in range(THREADS)]
+        envs = [ge.AGTrainingEnvironment(13, 2, False, self.brain) for i in range(THREADS)]
         opts = [opt.Optimizer(self.brain) for i in range(OPTIMIZERS)]
 
         for o in opts:
-          o.start()
+            o.start()
 
         for e in envs:
-          e.start()
+            e.start()
 
         time.sleep(RUN_TIME)
 
         for e in envs:
-          e.stop()
+            e.stop()
         for e in envs:
-          e.join()
+            e.join()
 
         for o in opts:
-          o.stop()
+            o.stop()
         for o in opts:
-          o.join()
+            o.join()
+        print("Training "+str(i)+" finished")
+        self.save(output_dir + '/WeightsafterTraining2')
 
-        print("Training finished")
-        self.save(output_dir + '/WeightsafterTraining')
+    def next_action(self,player,players,apples,training):
+      if (not self.optimized):
+        self.optimized=True
+        for i in range(1,6):
+            self.run_threads(i)
 
       self.state = np.reshape(ohe.encode_state(player, players, apples), [1,1350])
 
